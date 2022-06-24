@@ -1,4 +1,5 @@
 .vscode/
 target/
+playground/
 Cargo.lock
 *.log
