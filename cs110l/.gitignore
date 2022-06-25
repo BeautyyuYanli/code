@@ -1,5 +1,6 @@
 .vscode/
 target/
 playground/
+starter-2020/
 Cargo.lock
 *.log
