@@ -13,13 +13,14 @@ http = "0.2"
 log = "0.4"
 env_logger = "0.7"
 pretty_env_logger = "0.4"
-threadpool = "1.8"
-tokio = { version = "0.2", features = ["full"] }
+tokio = { version = "1.19.2", features = ["full"] }
 rand = "0.7"
 parking_lot = "0.10"
+crossbeam-channel = "0.4.2"
+threadpool = "1.8.1"
 
 [dev-dependencies]
 nix = "0.17"
-hyper = "0.13"
-reqwest = "0.10"
+hyper = { version="0.14.19", features = ["full"] }
+reqwest = "0.11.11"
 async-trait = "0.1"
