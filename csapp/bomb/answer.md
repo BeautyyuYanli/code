@@ -401,3 +401,185 @@ ionefg
 ```
 
 The answer can be any one of the above.
+
+## phase 6
+```asm
+00000000004010f4 <phase_6>:
+  4010f4:	41 56                	push   %r14
+  4010f6:	41 55                	push   %r13
+  4010f8:	41 54                	push   %r12
+  4010fa:	55                   	push   %rbp
+  4010fb:	53                   	push   %rbx
+  4010fc:	48 83 ec 50          	sub    $0x50,%rsp
+  401100:	49 89 e5             	mov    %rsp,%r13
+  401103:	48 89 e6             	mov    %rsp,%rsi
+  401106:	e8 51 03 00 00       	call   40145c <read_six_numbers>
+  40110b:	49 89 e6             	mov    %rsp,%r14
+  40110e:	41 bc 00 00 00 00    	mov    $0x0,%r12d
+  # %r12d = 0, %r13 = -0x50, alias num = %r13
+
+  401114:	4c 89 ed             	mov    %r13,%rbp
+  401117:	41 8b 45 00          	mov    0x0(%r13),%eax # %eax = num[0]
+  40111b:	83 e8 01             	sub    $0x1,%eax
+  40111e:	83 f8 05             	cmp    $0x5,%eax 
+  401121:	76 05                	jbe    401128 <phase_6+0x34> # num[0] should be <= 6 but not 0
+  401123:	e8 12 03 00 00       	call   40143a <explode_bomb>
+  401128:	41 83 c4 01          	add    $0x1,%r12d
+  40112c:	41 83 fc 06          	cmp    $0x6,%r12d
+  401130:	74 21                	je     401153 <phase_6+0x5f> # prev %r12d from 0 to 5
+  401132:	44 89 e3             	mov    %r12d,%ebx            # %ebx = %r12d from 1 to 5
+
+  401135:	48 63 c3             	movslq %ebx,%rax
+  401138:	8b 04 84             	mov    (%rsp,%rax,4),%eax    # %eax = %rsp[%ebx]
+  40113b:	39 45 00             	cmp    %eax,0x0(%rbp)        
+  40113e:	75 05                	jne    401145 <phase_6+0x51> # %rsp[%ebx] should != num[0]
+  401140:	e8 f5 02 00 00       	call   40143a <explode_bomb>
+  401145:	83 c3 01             	add    $0x1,%ebx             # %ebx += 1
+  401148:	83 fb 05             	cmp    $0x5,%ebx
+  40114b:	7e e8                	jle    401135 <phase_6+0x41>
+  # %rsp[%r12d to 5] should be different from num[0]
+
+  40114d:	49 83 c5 04          	add    $0x4,%r13 # num += 1
+  401151:	eb c1                	jmp    401114 <phase_6+0x20>
+  # ==================================================================================
+  # from 401114 to 401151, check that all the args should be different from each other
+  # That is, arg[] is a permutation of [1,6]
+  # ==================================================================================
+
+  401153:	48 8d 74 24 18       	lea    0x18(%rsp),%rsi
+  401158:	4c 89 f0             	mov    %r14,%rax
+  40115b:	b9 07 00 00 00       	mov    $0x7,%ecx
+  401160:	89 ca                	mov    %ecx,%edx
+  401162:	2b 10                	sub    (%rax),%edx
+  401164:	89 10                	mov    %edx,(%rax)
+  401166:	48 83 c0 04          	add    $0x4,%rax
+  40116a:	48 39 f0             	cmp    %rsi,%rax
+  40116d:	75 f1                	jne    401160 <phase_6+0x6c>
+  # for each arg[i], arg[i] = 7 - arg[i]
+  # still, arg[] is a permutation of [1,6]
+
+  40116f:	be 00 00 00 00       	mov    $0x0,%esi
+  401174:	eb 21                	jmp    401197 <phase_6+0xa3>
+  # initialize a cnt from 0 to 5, %rsi is cnt*4
+
+  401176:	48 8b 52 08          	mov    0x8(%rdx),%rdx  # rdx = *(rdx + 8)
+  40117a:	83 c0 01             	add    $0x1,%eax
+  40117d:	39 c8                	cmp    %ecx,%eax
+  40117f:	75 f5                	jne    401176 <phase_6+0x82>
+  # That is, define f[1] as 0x6032d0, f[i] = *(f[i-1] + 8)
+  # %rdx = f[arg[cnt]]
+  401181:	eb 05                	jmp    401188 <phase_6+0x94>
+
+  401183:	ba d0 32 60 00       	mov    $0x6032d0,%edx
+  # case f[1]
+  401188:	48 89 54 74 20       	mov    %rdx,0x20(%rsp,%rsi,2)
+  # Define magic = rsp + 0x20, magic[cnt] = f[arg[cnt]]
+  40118d:	48 83 c6 04          	add    $0x4,%rsi
+  401191:	48 83 fe 18          	cmp    $0x18,%rsi
+  401195:	74 14                	je     4011ab <phase_6+0xb7>
+
+  401197:	8b 0c 34             	mov    (%rsp,%rsi,1),%ecx   # %ecx = arg[cnt]
+  40119a:	83 f9 01             	cmp    $0x1,%ecx
+  40119d:	7e e4                	jle    401183 <phase_6+0x8f> # if arg[cnt] is 1, jump to ...
+  40119f:	b8 01 00 00 00       	mov    $0x1,%eax
+  4011a4:	ba d0 32 60 00       	mov    $0x6032d0,%edx
+  4011a9:	eb cb                	jmp    401176 <phase_6+0x82>
+  # ==================================================================================
+  # From 401176 to 4011a9, define magic[cnt] = f[arg[cnt]]
+  # ==================================================================================
+
+  4011ab:	48 8b 5c 24 20       	mov    0x20(%rsp),%rbx # %rbx = magic[0]
+  4011b0:	48 8d 44 24 28       	lea    0x28(%rsp),%rax # %rax = &magic[1]
+  4011b5:	48 8d 74 24 50       	lea    0x50(%rsp),%rsi # %rsi = magic[].end
+  4011ba:	48 89 d9             	mov    %rbx,%rcx
+  # Denote i from 1 to 5
+  4011bd:	48 8b 10             	mov    (%rax),%rdx
+  4011c0:	48 89 51 08          	mov    %rdx,0x8(%rcx) # *(magic[i-1] + 8) = magic[i]
+  4011c4:	48 83 c0 08          	add    $0x8,%rax
+  4011c8:	48 39 f0             	cmp    %rsi,%rax
+  4011cb:	74 05                	je     4011d2 <phase_6+0xde>
+  4011cd:	48 89 d1             	mov    %rdx,%rcx
+  4011d0:	eb eb                	jmp    4011bd <phase_6+0xc9>
+  # for i from 1 to 5, *(magic[i-1] + 8) = magic[i]
+  4011d2:	48 c7 42 08 00 00 00 	movq   $0x0,0x8(%rdx) # *(magic[5] + 8) = 0
+  4011d9:	00 
+
+  4011da:	bd 05 00 00 00       	mov    $0x5,%ebp
+  # Denoted %rbx as g[], 6 - %ebp as cnt
+  # Define g[0] = magic[0], g[i] = *(g[i-1] + 8), that is, g[i] = magic[i]
+  4011df:	48 8b 43 08          	mov    0x8(%rbx),%rax # %rax = *(magic[0] + 8)
+  4011e3:	8b 00                	mov    (%rax),%eax    # %eax = *(g[cnt])
+  4011e5:	39 03                	cmp    %eax,(%rbx)    
+  4011e7:	7d 05                	jge    4011ee <phase_6+0xfa> # *(g[cnt-1]) should >= *(g[cnt])
+  4011e9:	e8 4c 02 00 00       	call   40143a <explode_bomb>
+  4011ee:	48 8b 5b 08          	mov    0x8(%rbx),%rbx
+  4011f2:	83 ed 01             	sub    $0x1,%ebp      # %cnt from 1 to 5
+  4011f5:	75 e8                	jne    4011df <phase_6+0xeb>
+
+  4011f7:	48 83 c4 50          	add    $0x50,%rsp
+  4011fb:	5b                   	pop    %rbx
+  4011fc:	5d                   	pop    %rbp
+  4011fd:	41 5c                	pop    %r12
+  4011ff:	41 5d                	pop    %r13
+  401201:	41 5e                	pop    %r14
+  401203:	c3                   	ret    
+
+000000000040145c <read_six_numbers>:
+  40145c:	48 83 ec 18          	sub    $0x18,%rsp
+  401460:	48 89 f2             	mov    %rsi,%rdx        # arg0 -0x50
+  401463:	48 8d 4e 04          	lea    0x4(%rsi),%rcx   # arg1 -0x4c
+  401467:	48 8d 46 14          	lea    0x14(%rsi),%rax
+  40146b:	48 89 44 24 08       	mov    %rax,0x8(%rsp)   # arg5 -0x3c
+  401470:	48 8d 46 10          	lea    0x10(%rsi),%rax
+  401474:	48 89 04 24          	mov    %rax,(%rsp)      # arg4 -0x40
+  401478:	4c 8d 4e 0c          	lea    0xc(%rsi),%r9    # arg3 -0x44
+  40147c:	4c 8d 46 08          	lea    0x8(%rsi),%r8    # arg2 -0x48
+  401480:	be c3 25 40 00       	mov    $0x4025c3,%esi
+  401485:	b8 00 00 00 00       	mov    $0x0,%eax
+  40148a:	e8 61 f7 ff ff       	call   400bf0 <__isoc99_sscanf@plt>
+  40148f:	83 f8 05             	cmp    $0x5,%eax
+  401492:	7f 05                	jg     401499 <read_six_numbers+0x3d>
+  401494:	e8 a1 ff ff ff       	call   40143a <explode_bomb>
+  401499:	48 83 c4 18          	add    $0x18,%rsp
+  40149d:	c3                   	ret    
+```
+
+From the code I get following infomation:
+
+There is such a given link-list:
+```c
+struct node {
+    int val;
+    struct node *next;
+}head;
+```
+Where `head = 0x6032d0`. Then the code requires that we need to sort the link-list in decsending order, by inputing a permutation of `[1:6]`.
+
+So I check the heap for the value of the nodes in the link-list:
+- 332, 0x006032e0
+- 168, 0x006032f0
+- 924, 0x00603300
+- 691, 0x00603310
+- 477, 0x00603320
+- 443, 0x00000000
+
+Then the order is clear:
+```
+3 4 5 6 1 2
+```
+
+Last but not least, we need to inverse the array to get the answer, because of `0x401162`:
+```
+4 3 2 1 6 5
+```
+
+# Answer(one possible)
+```
+Border relations with Canada have never been better.
+1 2 4 8 16 32
+0 207
+0 0
+IONEFG
+4 3 2 1 6 5
+
+```
