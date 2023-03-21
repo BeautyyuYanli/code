@@ -1,3 +1,7 @@
+My answer is saved in [answer/](answer/) and explained in [answer.md](answer.md).
+
+=== original readme ===
+
 This file contains materials for one instance of the attacklab.
 
 Files:
