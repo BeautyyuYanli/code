@@ -1,0 +1,7 @@
+*.yo
+*.o
+yas
+yis
+psim
+ssim
+hcl2c
